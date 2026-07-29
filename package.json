@@ -1,0 +1,13 @@
+{
+  "name": "yurba-ap",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm run build:js && npm run build:css",
+    "build:js": "esbuild yurba-ap.js --bundle=false --minify --outfile=dist/yurba-ap.min.js",
+    "build:css": "esbuild yurba-ap.css --minify --outfile=dist/yurba-ap.min.css"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YurbaAP — Documentation</title>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+
+    <link rel="stylesheet" href="yurba-ap.css">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+<div class="header">
+    <div class="header-inner">
+        <h1>YurbaAP</h1>
+    </div>
+</div>
+
+<div class="layout">
+
+    <nav class="sidebar">
+        <div class="sidebar-group">
+            <div class="sidebar-group-title">Getting started</div>
+            <a href="#usage">Usage</a>
+        </div>
+        <div class="sidebar-group">
+            <div class="sidebar-group-title">Demo</div>
+            <a href="#demo">Live demo</a>
+        </div>
+        <div class="sidebar-group">
+            <div class="sidebar-group-title">API</div>
+            <a href="#create">create (static)</a>
+            <a href="#setTrack">setTrack</a>
+            <a href="#play">play</a>
+            <a href="#pause">pause</a>
+            <a href="#togglePlay">togglePlay</a>
+            <a href="#isPaused">isPaused</a>
+            <a href="#playlist">Playlist</a>
+        </div>
+        <div class="sidebar-group">
+            <div class="sidebar-group-title">Events</div>
+            <a href="#events">Overview</a>
+            <a href="#event-set_track">yurba-ap.set_track</a>
+            <a href="#event-play">yurba-ap.play</a>
+            <a href="#event-pause">yurba-ap.pause</a>
+            <a href="#event-ended">yurba-ap.ended</a>
+            <a href="#event-playlist_end">yurba-ap.playlist_end</a>
+        </div>
+        <div class="sidebar-group">
+            <div class="sidebar-group-title">Customization</div>
+            <a href="#controls">Hiding controls</a>
+            <a href="#css-vars">CSS variables</a>
+        </div>
+    </nav>
+
+    <main>
+
+        <section>
+            <div class="doc-header">
+                <h2 class="doc-component-name">YurbaAudioPlayer</h2>
+                <p class="doc-component-desc">Minimal, zero-dependency audio player supporting dynamic playlists with auto-advance, smart playback persistence via LocalStorage, flexible speed cycling, and custom action buttons.</p>
+            </div>
+
+            <div class="doc-section" id="usage">
+                <div class="doc-section-title">Usage</div>
+                <div class="gap-stack">
+                    <div class="code-block">
+                        <pre><code class="language-html">&lt;link rel="stylesheet" href="/dist/yurba-ap.min.css"&gt;
+&lt;script src="/dist/yurba-ap.min.js"&gt;&lt;/script&gt;</code></pre>
+                    </div>
+                    <p class="note">The player is created entirely from JavaScript via the static <a href="#create"><code>YurbaAP.create()</code></a> factory — no HTML markup needed. It appends itself to <code>document.body</code> and returns the element.</p>
+                    <div class="code-block">
+                        <pre><code class="language-javascript">const player = YurbaAP.create()
+
+player.setTrack({
+    title:  'His Theme',
+    author: 'Toby Fox',
+    cover:  'https://cdn.yurba.one/photos/4225.jpg',
+    url:    'https://cdn.yurba.one/musebase/1.mp3',
+})
+
+player.play()</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="section-divider">
+
+        <section>
+            <div class="doc-header">
+                <h2 class="doc-component-name">Live demo</h2>
+            </div>
+            <div class="doc-section" id="demo">
+                <div class="gap-stack">
+                    <div class="demo-player-wrap" id="demo-player-slot"></div>
+                    <div class="demo-card">
+                        <div class="demo-form">
+                            <div class="demo-field">
+                                <label>Title</label>
+                                <input id="demo-title" type="text" placeholder="Track name" value="His Theme">
+                            </div>
+                            <div class="demo-field">
+                                <label>Author</label>
+                                <input id="demo-author" type="text" placeholder="Artist" value="Toby Fox">
+                            </div>
+                            <div class="demo-field">
+                                <label>Cover URL</label>
+                                <input id="demo-cover" type="url" placeholder="https://...jpg" value="https://cdn.yurba.one/photos/4225.jpg">
+                            </div>
+                            <div class="demo-field">
+                                <label>Audio URL</label>
+                                <input id="demo-url" type="url" placeholder="https://...mp3" value="https://cdn.yurba.one/musebase/1.mp3">
+                            </div>
+                            <button class="demo-load-btn" id="demo-load">Add to playlist</button>
+                        </div>
+                        <div class="demo-playlist" id="demo-playlist"></div>
+                    </div>
+                    <div class="demo-events" id="demo-events">Events will appear here…</div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="section-divider">
+
+        <section>
+            <div class="doc-header">
+                <h2 class="doc-component-name">API</h2>
+                <p class="doc-component-desc">All public methods available on the <code>&lt;yurba-ap&gt;</code> element instance.</p>
+            </div>
+
+            <div class="doc-section" id="create">
+                <div class="doc-section-title">create</div>
+                <div class="gap-stack">
+                    <div class="code-block">
+                        <pre><code class="language-javascript">const player = YurbaAP.create(config)</code></pre>
+                    </div>
+                    <p class="note">Factory method — the only way to create a player. Creates the <code>&lt;yurba-ap&gt;</code> element, appends it to <code>document.body</code>, and returns it.</p>
+                    <table class="api-table">
+                        <thead><tr><th>Config key</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><code>icons</code> <span class="optional-badge">optional</span></td>
+                                <td><span class="type-badge">object</span></td>
+                                <td>built-in</td>
+                                <td>Override button icons. Keys: <code>play</code>, <code>volume</code>. Each value is an HTML string.</td>
+                            </tr>
+                            <tr>
+                                <td><code>controls</code> <span class="optional-badge">optional</span></td>
+                                <td><span class="type-badge">object</span></td>
+                                <td>all visible</td>
+                                <td>Hide built-in controls. Keys: <code>volume</code>, <code>speed</code>. Set to <code>false</code> to hide.</td>
+                            </tr>
+                            <tr>
+                                <td><code>buttons</code> <span class="optional-badge">optional</span></td>
+                                <td><span class="type-badge">array</span></td>
+                                <td><code>[]</code></td>
+                                <td>Custom buttons appended after the speed label. Each entry: <code>{ html, onClick? }</code>. <code>onClick(player, event)</code> is called on click.</td>
+                            </tr>
+                            <tr>
+                                <td><code>persist</code> <span class="optional-badge">optional</span></td>
+                                <td><span class="type-badge">boolean</span></td>
+                                <td><code>true</code></td>
+                                <td>Save and restore volume, speed, and the last loaded track via <code>localStorage</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><code>speedSteps</code> <span class="optional-badge">optional</span></td>
+                                <td><span class="type-badge">number[]</span></td>
+                                <td><code>[0.5, 0.75, 1, 1.25, 1.5, 2]</code></td>
+                                <td>Playback speed cycle steps. Clicking the speed label cycles through them in order.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="note">Minimal — all controls visible, default speed steps, persistence on:</p>
+                    <div class="code-block">
+                        <pre><code class="language-javascript">const player = YurbaAP.create()</code></pre>
+                    </div>
+                    <p class="note">Full config:</p>
+                    <div class="code-block">
+                        <pre><code class="language-javascript">const player = YurbaAP.create({
+    persist: true,
+
+    speedSteps: [0.5, 0.75, 1, 1.25, 1.5, 2],
+
+    icons: {
+        play:   '&lt;span class="material-symbols-rounded"&gt;play_arrow&lt;/span&gt;',
+        volume: '&lt;span class="material-symbols-rounded"&gt;volume_up&lt;/span&gt;',
+    },
+
+    buttons: [
+        {
+            html: '&lt;span class="material-symbols-rounded"&gt;favorite&lt;/span&gt;',
+            onClick: (player, event) =&gt; console.log('liked:', player.currentTrack),
+        },
+    ],
+})</code></pre>
+                    </div>
+                    <div class="note">The returned element is already in the DOM. You can call <code>.setTrack()</code> / <code>.play()</code> on it immediately.</div>
+                </div>
+            </div>
+
+            <div class="doc-section" id="setTrack">
+                <div class="doc-section-title">setTrack</div>
+                <div class="gap-stack">
+                    <div class="code-block">
+                        <pre><code class="language-javascript">player.setTrack(track)</code></pre>
+                    </div>
+                    <p class="note">Loads a new track. Pauses the current audio if any, updates the cover, title, and author display, then creates a new <code>Audio</code> object. Does nothing if the same track reference is passed twice.</p>
+                    <table class="api-table">
+                        <thead><tr><th>Track field</th><th>Type</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><code>title</code> <span class="required-badge">required</span></td>
+                                <td><span class="type-badge">string</span></td>
+                                <td>Track name shown in the player.</td>
+                            </tr>
+                            <tr>
+                                <td><code>author</code> <span class="required-badge">required</span></td>
+                                <td><span class="type-badge">string</span></td>
+                                <td>Artist name shown in the player.</td>
+                            </tr>
+                            <tr>
+                                <td><code>url</code> <span class="required-badge">required</span></td>
+                                <td><span class="type-badge">string</span></td>
+                                <td>Audio file URL.</td>
+                            </tr>
+                            <tr>
+                                <td><code>cover</code> <span class="optional-badge">optional</span></td>
+                                <td><span class="type-badge">string</span></td>
+                                <td>Cover image URL. The cover element is hidden when omitted or falsy.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="note">Any extra fields on the track object are preserved and accessible via <code>event.track</code> in event handlers — useful for passing an ID or other metadata.</div>
+                    <div class="code-block">
+                        <pre><code class="language-javascript">player.setTrack({
+    title:  'Song title',
+    author: 'Artist',
+    cover:  'https://cdn.example.com/cover.jpg',
+    url:    'https://cdn.example.com/audio.mp3',
+    id:     42,  // extra field, accessible via event.track.id
+})</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="doc-section" id="play">
+                <div class="doc-section-title">play</div>
+                <div class="gap-stack">
+                    <div class="code-block">
+                        <pre><code class="language-javascript">player.play()</code></pre>
+                    </div>
+                    <p class="note">Starts playback of the current audio. Updates the play button icon to pause. Fires <a href="#event-play"><code>yurba-ap.play</code></a>. No-op if no track is loaded.</p>
+                </div>
+            </div>
+
+            <div class="doc-section" id="pause">
+                <div class="doc-section-title">pause</div>
+                <div class="gap-stack">
+                    <div class="code-block">
+                        <pre><code class="language-javascript">player.pause()</code></pre>
+                    </div>
+                    <p class="note">Pauses the current audio. Updates the play button icon to play. Fires <a href="#event-pause"><code>yurba-ap.pause</code></a>. No-op if no track is loaded.</p>
+                </div>
+            </div>
+
+            <div class="doc-section" id="togglePlay">
+                <div class="doc-section-title">togglePlay</div>
+                <div class="gap-stack">
+                    <div class="code-block">
+                        <pre><code class="language-javascript">const isPlaying = player.togglePlay()</code></pre>
+                    </div>
+                    <p class="note">Toggles between play and pause. Returns <code>true</code> if now playing. No-op if no track is loaded.</p>
+                </div>
+            </div>
+
+            <div class="doc-section" id="isPaused">
+                <div class="doc-section-title">isPaused</div>
+                <div class="gap-stack">
+                    <div class="code-block">
+                        <pre><code class="language-javascript">const paused = player.isPaused()</code></pre>
+                    </div>
+                    <p class="note">Returns <code>true</code> if the audio is paused or no track has been loaded yet.</p>
+                </div>
+            </div>
+
+            <div class="doc-section" id="playlist">
+                <div class="doc-section-title">Playlist</div>
+                <div class="gap-stack">
+                    <p class="note">The playlist is an object keyed by numeric index. When a track ends, the player automatically advances to the next index and calls <code>play()</code>.</p>
+                    <table class="api-table">
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>setPlaylist(playlist)</code></td><td>Replace the playlist with an object <code>{ 0: track, 1: track, … }</code>.</td></tr>
+                            <tr><td><code>getPlaylist()</code></td><td>Returns the current playlist object.</td></tr>
+                            <tr><td><code>pushPlaylist(tracks)</code></td><td>Append an array of track objects to the existing playlist.</td></tr>
+                            <tr><td><code>playFirst()</code></td><td>Load and play the track at index <code>0</code>.</td></tr>
+                            <tr><td><code>prevTrack()</code></td><td>Load and play the previous track, if any.</td></tr>
+                            <tr><td><code>nextTrack()</code></td><td>Load and play the next track. Fires <code>yurba-ap.playlist_end</code> if already at the last track.</td></tr>
+                            <tr><td><code>getPlayingIndex()</code></td><td>Returns the current playlist index.</td></tr>
+                            <tr><td><code>setPlayingIndex(i)</code></td><td>Override the current playlist index.</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="code-block">
+                        <pre><code class="language-javascript">const tracks = [
+    { title: 'First',  author: 'Artist', url: '...mp3' },
+    { title: 'Second', author: 'Artist', url: '...mp3' },
+]
+
+player.pushPlaylist(tracks)
+player.playFirst()
+
+player.addEventListener('yurba-ap.playlist_end', () =&gt; {
+    console.log('playlist finished')
+})</code></pre>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <hr class="section-divider">
+
+        <section>
+            <div class="doc-header">
+                <h2 class="doc-component-name">Events</h2>
+                <p class="doc-component-desc">All events are dispatched as bubbling <code>CustomEvent</code>s on the <code>&lt;yurba-ap&gt;</code> element, namespaced under <code>yurba-ap.*</code>. Each event carries an <code>event.track</code> property with the current track object.</p>
+            </div>
+
+            <div class="doc-section" id="events">
+                <div class="doc-section-title">Overview</div>
+                <div class="gap-stack">
+                    <table class="api-table">
+                        <thead><tr><th>Event</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><a href="#event-set_track"><code>yurba-ap.set_track</code></a></td><td>A new track was loaded via <code>setTrack()</code>.</td></tr>
+                            <tr><td><a href="#event-play"><code>yurba-ap.play</code></a></td><td>Playback started.</td></tr>
+                            <tr><td><a href="#event-pause"><code>yurba-ap.pause</code></a></td><td>Playback paused.</td></tr>
+                            <tr><td><a href="#event-ended"><code>yurba-ap.ended</code></a></td><td>Current track ended. Playlist advances automatically if available.</td></tr>
+                            <tr><td><a href="#event-playlist_end"><code>yurba-ap.playlist_end</code></a></td><td>Reached the end of the playlist.</td></tr>
+                            <tr><td><code>yurba-ap.progress</code></td><td>Playback position updated (fires on <code>timeupdate</code>).</td></tr>
+                            <tr><td><code>yurba-ap.volume</code></td><td>Volume changed by the user.</td></tr>
+                            <tr><td><code>yurba-ap.speed</code></td><td>Playback speed changed.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="doc-section" id="event-set_track">
+                <div class="doc-section-title">yurba-ap.set_track</div>
+                <div class="gap-stack">
+                    <p class="note">Fired on the player element when a new track is loaded via <code>setTrack()</code>. The <code>event.track</code> property holds the track object that was passed in.</p>
+                    <div class="code-block">
+                        <pre><code class="language-javascript">player.addEventListener('yurba-ap.set_track', (e) =&gt; {
+    console.log('now playing:', e.track.title)
+})</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="doc-section" id="event-play">
+                <div class="doc-section-title">yurba-ap.play</div>
+                <div class="gap-stack">
+                    <p class="note">Fired when playback starts — via the play button, <code>play()</code>, or <code>togglePlay()</code>.</p>
+                    <div class="code-block">
+                        <pre><code class="language-javascript">player.addEventListener('yurba-ap.play', (e) =&gt; {
+    console.log('playing:', e.track.title)
+})</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="doc-section" id="event-pause">
+                <div class="doc-section-title">yurba-ap.pause</div>
+                <div class="gap-stack">
+                    <p class="note">Fired when playback is paused — via the play button, <code>pause()</code>, or <code>togglePlay()</code>.</p>
+                    <div class="code-block">
+                        <pre><code class="language-javascript">player.addEventListener('yurba-ap.pause', (e) =&gt; {
+    console.log('paused:', e.track.title)
+})</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="doc-section" id="event-ended">
+                <div class="doc-section-title">yurba-ap.ended</div>
+                <div class="gap-stack">
+                    <p class="note">Fired when the current track finishes. After this event, if there is a next track in the playlist, the player automatically loads and plays it. If there is no next track, <a href="#event-playlist_end"><code>yurba-ap.playlist_end</code></a> fires instead.</p>
+                    <div class="code-block">
+                        <pre><code class="language-javascript">player.addEventListener('yurba-ap.ended', (e) =&gt; {
+    console.log('track ended:', e.track.title)
+})</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="doc-section" id="event-playlist_end">
+                <div class="doc-section-title">yurba-ap.playlist_end</div>
+                <div class="gap-stack">
+                    <p class="note">Fired when playback reaches the end of the playlist — either the last track finishes, or <code>nextTrack()</code> is called while already on the last track. Use this to load more tracks, loop, or show a UI state.</p>
+                    <div class="code-block">
+                        <pre><code class="language-javascript">player.addEventListener('yurba-ap.playlist_end', () =&gt; {
+    console.log('playlist finished')
+})</code></pre>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <hr class="section-divider">
+
+        <section>
+            <div class="doc-header">
+                <h2 class="doc-component-name">Customization</h2>
+            </div>
+
+            <div class="doc-section" id="controls">
+                <div class="doc-section-title">Hiding controls</div>
+                <div class="gap-stack">
+                    <p class="note">Pass a <code>controls</code> object to <code>YurbaAP.create()</code>. Each key corresponds to a built-in control — set it to <code>false</code> to hide it. Omitted keys default to visible.</p>
+                    <div class="code-block">
+                        <pre><code class="language-javascript">const player = YurbaAP.create({
+    controls: {
+        volume: false,
+        speed:  false,
+    }
+})</code></pre>
+                    </div>
+                    <table class="api-table">
+                        <thead><tr><th>Key</th><th>Default</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><code>volume</code></td>
+                                <td><span class="type-badge">true</span></td>
+                                <td>Toggle the volume icon and its slider popup.</td>
+                            </tr>
+                            <tr>
+                                <td><code>speed</code></td>
+                                <td><span class="type-badge">true</span></td>
+                                <td>Toggle the playback speed label and its slider popup.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="doc-section" id="css-vars">
+                <div class="doc-section-title">CSS variables</div>
+                <div class="gap-stack">
+                    <p class="note">The player defines its own CSS variables on the <code>yurba-ap</code> element with sensible defaults. Override them on the element or any parent.</p>
+                    <table class="api-table">
+                        <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>--y-ap-bg</code></td><td><code>#ffffff</code></td><td>Player background color.</td></tr>
+                            <tr><td><code>--y-ap-text</code></td><td><code>#1c1c1e</code></td><td>Text and icon color.</td></tr>
+                            <tr><td><code>--y-ap-muted</code></td><td><code>rgba(0,0,0,0.4)</code></td><td>Secondary text and icon color.</td></tr>
+                            <tr><td><code>--y-ap-accent</code></td><td><code>#4e7cff</code></td><td>Accent color: slider fill and active state.</td></tr>
+                            <tr><td><code>--y-ap-track</code></td><td><code>rgba(0,0,0,0.08)</code></td><td>Unfilled slider track color.</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="code-block">
+                        <pre><code class="language-css">/* Dark theme example */
+yurba-ap {
+    --y-ap-bg:    #1c1c1e;
+    --y-ap-text:  #ffffff;
+    --y-ap-muted: rgba(255, 255, 255, 0.45);
+    --y-ap-track: rgba(255, 255, 255, 0.12);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script src="yurba-ap.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="index.js"></script>
+
+</body>
+</html>
