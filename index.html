@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YurbaAP — Documentation</title>
+    <title>YurbaAP - Documentation</title>
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
@@ -71,7 +71,7 @@
                         <pre><code class="language-html">&lt;link rel="stylesheet" href="/dist/yurba-ap.min.css"&gt;
 &lt;script src="/dist/yurba-ap.min.js"&gt;&lt;/script&gt;</code></pre>
                     </div>
-                    <p class="note">The player is created entirely from JavaScript via the static <a href="#create"><code>YurbaAP.create()</code></a> factory — no HTML markup needed. It appends itself to <code>document.body</code> and returns the element.</p>
+                    <p class="note">The player is created entirely from JavaScript via the static <a href="#create"><code>YurbaAP.create()</code></a> factory - no HTML markup needed. It appends itself to <code>document.body</code> and returns the element.</p>
                     <div class="code-block">
                         <pre><code class="language-javascript">const player = YurbaAP.create()
 
@@ -138,7 +138,7 @@ player.play()</code></pre>
                     <div class="code-block">
                         <pre><code class="language-javascript">const player = YurbaAP.create(config)</code></pre>
                     </div>
-                    <p class="note">Factory method — the only way to create a player. Creates the <code>&lt;yurba-ap&gt;</code> element, appends it to <code>document.body</code>, and returns it.</p>
+                    <p class="note">Factory method - the only way to create a player. Creates the <code>&lt;yurba-ap&gt;</code> element, appends it to <code>document.body</code>, and returns it.</p>
                     <table class="api-table">
                         <thead><tr><th>Config key</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
                         <tbody>
@@ -174,7 +174,7 @@ player.play()</code></pre>
                             </tr>
                         </tbody>
                     </table>
-                    <p class="note">Minimal — all controls visible, default speed steps, persistence on:</p>
+                    <p class="note">Minimal - all controls visible, default speed steps, persistence on:</p>
                     <div class="code-block">
                         <pre><code class="language-javascript">const player = YurbaAP.create()</code></pre>
                     </div>
@@ -234,7 +234,7 @@ player.play()</code></pre>
                             </tr>
                         </tbody>
                     </table>
-                    <div class="note">Any extra fields on the track object are preserved and accessible via <code>event.track</code> in event handlers — useful for passing an ID or other metadata.</div>
+                    <div class="note">Any extra fields on the track object are preserved and accessible via <code>event.track</code> in event handlers - useful for passing an ID or other metadata.</div>
                     <div class="code-block">
                         <pre><code class="language-javascript">player.setTrack({
     title:  'Song title',
@@ -364,7 +364,7 @@ player.addEventListener('yurba-ap.playlist_end', () =&gt; {
             <div class="doc-section" id="event-play">
                 <div class="doc-section-title">yurba-ap.play</div>
                 <div class="gap-stack">
-                    <p class="note">Fired when playback starts — via the play button, <code>play()</code>, or <code>togglePlay()</code>.</p>
+                    <p class="note">Fired when playback starts - via the play button, <code>play()</code>, or <code>togglePlay()</code>.</p>
                     <div class="code-block">
                         <pre><code class="language-javascript">player.addEventListener('yurba-ap.play', (e) =&gt; {
     console.log('playing:', e.track.title)
@@ -376,7 +376,7 @@ player.addEventListener('yurba-ap.playlist_end', () =&gt; {
             <div class="doc-section" id="event-pause">
                 <div class="doc-section-title">yurba-ap.pause</div>
                 <div class="gap-stack">
-                    <p class="note">Fired when playback is paused — via the play button, <code>pause()</code>, or <code>togglePlay()</code>.</p>
+                    <p class="note">Fired when playback is paused - via the play button, <code>pause()</code>, or <code>togglePlay()</code>.</p>
                     <div class="code-block">
                         <pre><code class="language-javascript">player.addEventListener('yurba-ap.pause', (e) =&gt; {
     console.log('paused:', e.track.title)
@@ -400,7 +400,7 @@ player.addEventListener('yurba-ap.playlist_end', () =&gt; {
             <div class="doc-section" id="event-playlist_end">
                 <div class="doc-section-title">yurba-ap.playlist_end</div>
                 <div class="gap-stack">
-                    <p class="note">Fired when playback reaches the end of the playlist — either the last track finishes, or <code>nextTrack()</code> is called while already on the last track. Use this to load more tracks, loop, or show a UI state.</p>
+                    <p class="note">Fired when playback reaches the end of the playlist - either the last track finishes, or <code>nextTrack()</code> is called while already on the last track. Use this to load more tracks, loop, or show a UI state.</p>
                     <div class="code-block">
                         <pre><code class="language-javascript">player.addEventListener('yurba-ap.playlist_end', () =&gt; {
     console.log('playlist finished')
@@ -421,7 +421,7 @@ player.addEventListener('yurba-ap.playlist_end', () =&gt; {
             <div class="doc-section" id="controls">
                 <div class="doc-section-title">Hiding controls</div>
                 <div class="gap-stack">
-                    <p class="note">Pass a <code>controls</code> object to <code>YurbaAP.create()</code>. Each key corresponds to a built-in control — set it to <code>false</code> to hide it. Omitted keys default to visible.</p>
+                    <p class="note">Pass a <code>controls</code> object to <code>YurbaAP.create()</code>. Each key corresponds to a built-in control - set it to <code>false</code> to hide it. Omitted keys default to visible.</p>
                     <div class="code-block">
                         <pre><code class="language-javascript">const player = YurbaAP.create({
     controls: {

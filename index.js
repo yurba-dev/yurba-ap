@@ -1,15 +1,26 @@
 hljs.highlightAll()
 
-const playerEl = document.createElement('yurba-ap')
-playerEl.config = { persist: false }
-document.getElementById('demo-player-slot').appendChild(playerEl)
-const player = playerEl
+const playerSlot = document.getElementById('demo-player-slot')
+const eventsEl = document.getElementById('demo-events')
+const playlistEl = document.getElementById('demo-playlist')
+const loadButton = document.getElementById('demo-load')
+const titleInput = document.getElementById('demo-title')
+const authorInput = document.getElementById('demo-author')
+const coverInput = document.getElementById('demo-cover')
+const urlInput = document.getElementById('demo-url')
 
-const eventsEl    = document.getElementById('demo-events')
-const playlistEl  = document.getElementById('demo-playlist')
+const player = document.createElement('yurba-ap')
+player.config = { persist: false }
+playerSlot.appendChild(player)
 
 let demoPlaylist = []
-let activeTrack  = null
+let activeTrack = null
+
+function showEvent(name, track) {
+    const strong = document.createElement('strong')
+    strong.textContent = name
+    eventsEl.replaceChildren(strong, track ? ` - ${track.title}` : '')
+}
 
 function rebuildPlayerPlaylist() {
     const pl = {}
@@ -29,7 +40,7 @@ function removeTrack(i) {
             player.play()
         } else {
             player.pause()
-            player._infoEl.hidden = true
+            player.infoElement.hidden = true
             activeTrack = null
             renderPlaylist()
         }
@@ -47,17 +58,25 @@ function renderPlaylist() {
         item.innerHTML = `
             <span class="demo-track-num">${i + 1}</span>
             <div class="demo-track-info">
-                <div class="demo-track-name">${track.title || 'Unknown'}</div>
-                ${track.author ? `<div class="demo-track-author">${track.author}</div>` : ''}
+                <div class="demo-track-name"></div>
+                <div class="demo-track-author"></div>
             </div>
             <button class="demo-track-remove" title="Remove">×</button>`
 
-        item.querySelector('.demo-track-info').addEventListener('click', () => {
+        const info = item.querySelector('.demo-track-info')
+        const name = item.querySelector('.demo-track-name')
+        const author = item.querySelector('.demo-track-author')
+        const remove = item.querySelector('.demo-track-remove')
+        name.textContent = track.title || 'Unknown'
+        if (track.author) author.textContent = track.author
+        else author.remove()
+
+        info.addEventListener('click', () => {
             player.setTrack(track)
             player.play()
         })
 
-        item.querySelector('.demo-track-remove').addEventListener('click', e => {
+        remove.addEventListener('click', e => {
             e.stopPropagation()
             removeTrack(i)
         })
@@ -69,20 +88,18 @@ function renderPlaylist() {
 player.addEventListener('yurba-ap.set_track', e => {
     activeTrack = e.track
     renderPlaylist()
-    eventsEl.innerHTML = `<strong>yurba-ap.set_track</strong>${e.track ? ' — ' + e.track.title : ''}`
+    showEvent('yurba-ap.set_track', e.track)
 })
 
 ;['yurba-ap.play', 'yurba-ap.pause', 'yurba-ap.ended', 'yurba-ap.playlist_end'].forEach(name => {
-    player.addEventListener(name, e => {
-        eventsEl.innerHTML = `<strong>${name}</strong>${e.track ? ' — ' + e.track.title : ''}`
-    })
+    player.addEventListener(name, e => showEvent(name, e.track))
 })
 
-document.getElementById('demo-load').addEventListener('click', () => {
-    const title  = document.getElementById('demo-title').value.trim()
-    const author = document.getElementById('demo-author').value.trim()
-    const cover  = document.getElementById('demo-cover').value.trim()
-    const url    = document.getElementById('demo-url').value.trim()
+loadButton.addEventListener('click', () => {
+    const title = titleInput.value.trim()
+    const author = authorInput.value.trim()
+    const cover = coverInput.value.trim()
+    const url = urlInput.value.trim()
 
     if (!url) {
         eventsEl.innerHTML = '<strong style="color:#cc3300">Audio URL is required</strong>'
@@ -101,17 +118,13 @@ document.getElementById('demo-load').addEventListener('click', () => {
     }
 })
 
-// sidebar active link tracking
 const sections = document.querySelectorAll('.doc-section[id]')
-const links    = document.querySelectorAll('.sidebar a')
+const links = document.querySelectorAll('.sidebar a')
 
 const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            links.forEach(l => l.classList.remove('is-active'))
-            const active = document.querySelector(`.sidebar a[href="#${entry.target.id}"]`)
-            if (active) active.classList.add('is-active')
-        }
+        if (!entry.isIntersecting) return
+        links.forEach(link => link.classList.toggle('is-active', link.getAttribute('href') == `#${entry.target.id}`))
     })
 }, { rootMargin: '-20% 0px -70% 0px' })
 

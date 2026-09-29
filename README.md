@@ -20,7 +20,7 @@ Output: `dist/yurba-ap.min.js`, `dist/yurba-ap.min.css`
 
 ## Usage
 
-The player is created entirely from JavaScript via the static `YurbaAP.create()` factory — no HTML markup needed. It appends itself to `document.body` and returns the element.
+The player is created entirely from JavaScript via the static `YurbaAP.create()` factory - no HTML markup needed. It appends itself to `document.body` and returns the element.
 
 ```js
 const player = YurbaAP.create()
@@ -49,15 +49,16 @@ player.play()
 |---|---|---|---|
 | `icons` | object | built-in | Override button icons. Keys: `play`, `volume`. Each value is an HTML string. |
 | `controls` | object | all visible | Hide built-in controls. Keys: `volume`, `speed`. Set to `false` to hide. |
-| `buttons` | array | `[]` | Custom buttons. Each: `{ html, onClick? }`. `onClick(player, event)` is called on click. |
+| `buttons` | array | `[]` | Custom buttons. Each: `{ html, label?, onClick? }`. `label` is its accessible name; `onClick(player, event)` is called on click. |
 | `persist` | boolean | `true` | Save and restore volume, speed, and last track via `localStorage`. |
-| `speedSteps` | array | `[0.5, 0.75, 1, 1.25, 1.5, 2]` | Playback speed cycle steps. Clicking the speed label cycles through them. |
+| `speedSteps` | array | `[0.5, 0.75, 1, 1.25, 1.5, 2]` | Playback speeds. The first and last set the range of the speed slider, which opens on a click on the speed label; `cycleSpeed()` steps through all of them. |
+| `labels` | object | English | Accessible names of the controls. Keys: `play`, `pause`, `prev`, `next`, `volume`, `speed`, `seek`. |
 
 ### Instance
 
 | Method | Description |
 |---|---|
-| `setTrack(track)` | Load and display a track. See track object below. |
+| `setTrack(track)` | Load and display a track. See track object below. A track that is not in the playlist replaces it and plays alone. |
 | `play()` | Start playback. |
 | `pause()` | Pause playback. |
 | `togglePlay()` | Toggle play/pause. Returns `true` if now playing. |
@@ -66,8 +67,9 @@ player.play()
 | `getPlaylist()` | Returns the current playlist object. |
 | `pushPlaylist(tracks)` | Append an array of track objects to the playlist. |
 | `playFirst()` | Set and play the first track in the playlist. |
-| `prevTrack()` | Play the previous track, if any. |
-| `nextTrack()` | Play the next track. Fires `yurba-ap.playlist_end` if already on the last track. |
+| `cycleSpeed()` | Switch to the next of `speedSteps`, after the last back to the first. |
+| `prevTrack()` | Play the previous track, if any. Tracks without `url` are skipped. |
+| `nextTrack()` | Play the next track. Tracks without `url` are skipped. Fires `yurba-ap.playlist_end` if there is none. |
 | `getPlayingIndex()` | Returns the current playlist index. |
 | `setPlayingIndex(i)` | Set the current playlist index. |
 
@@ -90,7 +92,8 @@ All events fire on the `<yurba-ap>` element and carry an `event.track` property 
 |---|---|
 | `yurba-ap.set_track` | A new track was loaded via `setTrack()`. |
 | `yurba-ap.play` | Playback started. |
-| `yurba-ap.pause` | Playback paused. |
+| `yurba-ap.pause` | Playback paused: by `pause()`, a media key, the end of the track, a track that failed to start, or another track taking its place. |
+| `yurba-ap.error` | The track could not be loaded. |
 | `yurba-ap.ended` | Current track ended. |
 | `yurba-ap.playlist_end` | Reached the end of the playlist (last track ended, or `nextTrack()` called on the last track). |
 | `yurba-ap.progress` | Playback position updated (fires on `timeupdate`). |

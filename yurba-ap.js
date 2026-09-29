@@ -1,4 +1,14 @@
 class YurbaAP extends HTMLElement {
+    static LABELS = {
+        play: 'Play',
+        pause: 'Pause',
+        prev: 'Previous track',
+        next: 'Next track',
+        volume: 'Volume',
+        speed: 'Playback speed',
+        seek: 'Seek',
+    }
+
     static create(config = {}) {
         const element = document.createElement('yurba-ap')
         element.config = config
@@ -6,27 +16,54 @@ class YurbaAP extends HTMLElement {
         return element
     }
 
+    // Throws when the browser blocks site data
+    static storage() {
+        try {
+            return localStorage
+        } catch {
+            return {}
+        }
+    }
+
     connectedCallback() {
+        if (!this.built) this.build()
+
+        this.connection = new AbortController()
+        document.addEventListener('click', () => this.closePopups(), { signal: this.connection.signal })
+    }
+
+    disconnectedCallback() {
+        this.connection?.abort()
+    }
+
+    build() {
+        this.built = true
         const config = this.config || {}
         const icons = config.icons || {}
         const controls = config.controls || {}
         const buttons = config.buttons || []
-        this.persist = config.persist !== false
+        this.persist = config.persist != false
         this.speedSteps = config.speedSteps || [0.5, 0.75, 1, 1.25, 1.5, 2]
+        this.labels = Object.assign({}, YurbaAP.LABELS, config.labels || {})
+        const labels = this.labels
+        function attribute(text) {
+            return String(text).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+        }
 
-        const savedVolume = this.persist && localStorage.yap_volume != null ? localStorage.yap_volume : 0.5
-        const savedSpeed = this.persist && localStorage.yap_speed != null ? Number(localStorage.yap_speed) : 1
+        const storage = YurbaAP.storage()
+        const savedVolume = this.persist && storage.yap_volume != null ? Number(storage.yap_volume) : 0.5
+        const savedSpeed = this.persist && storage.yap_speed != null ? Number(storage.yap_speed) : 1
 
-        const showVolume = controls.volume !== false
-        const showSpeed = controls.speed !== false
+        const showVolume = controls.volume != false
+        const showSpeed = controls.speed != false
         const speedMin = this.speedSteps[0]
         const speedMax = this.speedSteps[this.speedSteps.length - 1]
 
-        const playHtml = icons.play || '<span class="material-symbols-rounded">play_arrow</span>'
+        const playHtml = this.playHtml = icons.play || '<span class="material-symbols-rounded">play_arrow</span>'
         const volumeHtml = icons.volume || '<span class="material-symbols-rounded">volume_up</span>'
 
         const customButtons = buttons.map((button, index) =>
-            `<div class="y-ap__btn" data-ap-btn="${index}">${button.html}</div>`
+            `<div class="y-ap__btn" data-ap-btn="${index}" role="button" tabindex="0"${button.label ? ` aria-label="${attribute(button.label)}"` : ''}>${button.html}</div>`
         ).join('')
 
         this.innerHTML = `<div class="y-ap">
@@ -37,23 +74,23 @@ class YurbaAP extends HTMLElement {
                     <p class="y-ap__title"></p>
                 </div>
                 <div class="y-ap__player-controls">
-                    <div class="y-ap__btn-prev" hidden><span class="material-symbols-rounded">skip_previous</span></div>
-                    <div class="y-ap__play">${playHtml}</div>
-                    <div class="y-ap__btn-next" hidden><span class="material-symbols-rounded">skip_next</span></div>
+                    <div class="y-ap__btn-prev" role="button" tabindex="0" aria-label="${attribute(labels.prev)}" hidden><span class="material-symbols-rounded">skip_previous</span></div>
+                    <div class="y-ap__play" role="button" tabindex="0" aria-label="${attribute(labels.play)}">${playHtml}</div>
+                    <div class="y-ap__btn-next" role="button" tabindex="0" aria-label="${attribute(labels.next)}" hidden><span class="material-symbols-rounded">skip_next</span></div>
                 </div>
                 <div class="y-ap__side-controls">
                     ${showVolume ?
                         `<div class="y-ap__popup-wrap">
-                            <span class="y-ap__icon y-ap__icon--volume">${volumeHtml}</span>
+                            <span class="y-ap__icon y-ap__icon--volume" role="button" tabindex="0" aria-label="${attribute(labels.volume)}">${volumeHtml}</span>
                             <div class="y-ap__vol-popup y-ap__popup">
-                                <input type="range" class="y-ap__slider y-ap__slider--volume" min="0" max="1" step="0.01" value="${savedVolume}">
+                                <input type="range" class="y-ap__slider y-ap__slider--volume" aria-label="${attribute(labels.volume)}" min="0" max="1" step="0.01" value="${savedVolume}">
                             </div>
                         </div>` : ''}
                     ${showSpeed ?
                         `<div class="y-ap__popup-wrap">
-                            <span class="y-ap__speed">${savedSpeed.toFixed(2)}x</span>
+                            <span class="y-ap__speed" role="button" tabindex="0" aria-label="${attribute(labels.speed)}">${savedSpeed.toFixed(2)}x</span>
                             <div class="y-ap__speed-popup y-ap__popup">
-                                <input type="range" class="y-ap__slider y-ap__slider--speed" min="${speedMin}" max="${speedMax}" step="0.05" value="${savedSpeed}">
+                                <input type="range" class="y-ap__slider y-ap__slider--speed" aria-label="${attribute(labels.speed)}" min="${speedMin}" max="${speedMax}" step="0.05" value="${savedSpeed}">
                             </div>
                         </div>` : ''}
                     ${customButtons}
@@ -62,7 +99,7 @@ class YurbaAP extends HTMLElement {
             <div class="y-ap__progress">
                 <span class="y-ap__time y-ap__time--current">00:00</span>
                 <div class="y-ap__track-wrap">
-                    <input type="range" class="y-ap__slider y-ap__slider--time" min="0" step="1" value="0">
+                    <input type="range" class="y-ap__slider y-ap__slider--time" aria-label="${attribute(labels.seek)}" min="0" step="1" value="0">
                     <div class="y-ap__buffered"></div>
                 </div>
                 <span class="y-ap__time y-ap__time--duration">00:00</span>
@@ -85,6 +122,13 @@ class YurbaAP extends HTMLElement {
 
         this.playlist = {}
         this.playingIndex = 0
+
+        this.addEventListener('keydown', event => {
+            if (event.key != 'Enter' && event.key != ' ') return
+            if (event.target.getAttribute('role') != 'button') return
+            event.preventDefault()
+            event.target.click()
+        })
 
         this.playButton.addEventListener('click', event => {
             event.stopPropagation()
@@ -149,23 +193,34 @@ class YurbaAP extends HTMLElement {
             })
         }
 
-        document.addEventListener('click', () => {
-            if (volumePopup) volumePopup.classList.remove('is-open')
-            if (speedPopup) speedPopup.classList.remove('is-open')
-        })
-
-        if (this.persist && localStorage.yap_lastTrack) {
+        if (this.persist && storage.yap_lastTrack) {
             try {
-                this.setTrack(JSON.parse(localStorage.yap_lastTrack))
-            } catch (error) { }
+                const last = JSON.parse(storage.yap_lastTrack)
+                // /musebase/<n>.mp3 URLs are not served
+                if (/\/musebase\/-?\d+\.mp3/.test(last?.url ?? '')) throw new Error('stale')
+                this.setTrack(last)
+            } catch { }
         }
     }
 
-    setTrack(track) {
-        if (this.currentTrack == track) return
-        this.currentTrack = track
+    closePopups() {
+        this.querySelectorAll('.y-ap__popup.is-open').forEach(popup => popup.classList.remove('is-open'))
+    }
 
-        if (this.audio) this.pause()
+    setTrack(track) {
+        if (!track || this.currentTrack == track) return
+
+        if (this.audio) {
+            this.audioListeners.abort()
+            if (!this.audio.paused) {
+                this.audio.pause()
+                this.emit('pause')
+            }
+            this.audio.removeAttribute('src')
+            this.audio.load()
+        }
+
+        this.currentTrack = track
 
         if (this.timeSlider) {
             this.timeSlider.value = 0
@@ -177,8 +232,8 @@ class YurbaAP extends HTMLElement {
 
         if (this.persist) {
             try {
-                localStorage.yap_lastTrack = JSON.stringify(track)
-            } catch (error) { }
+                YurbaAP.storage().yap_lastTrack = JSON.stringify(track)
+            } catch { }
         }
 
         this.titleElement.textContent = track.title ?? ''
@@ -193,18 +248,27 @@ class YurbaAP extends HTMLElement {
 
         this.infoElement.hidden = false
 
-        const volume = this.volumeSlider ? Number(this.volumeSlider.value) : (this.persist && localStorage.yap_volume != null ? Number(localStorage.yap_volume) : 0.5)
+        const storage = YurbaAP.storage()
+        const volume = this.volumeSlider ? Number(this.volumeSlider.value) : (this.persist && storage.yap_volume != null ? Number(storage.yap_volume) : 0.5)
         const speed = this.currentSpeed()
 
         this.audio = new Audio()
-        this.audio.src = track.url
+        if (track.url) this.audio.src = track.url
         this.audio.preload = 'metadata'
-        this.audio.volume = volume
-        this.audio.playbackRate = speed
+        // Non-finite values from storage make these setters throw
+        this.audio.volume = Number.isFinite(volume) ? Math.min(1, Math.max(0, volume)) : 0.5
+        this.audio.playbackRate = Number.isFinite(speed) && speed > 0 ? speed : 1
 
-        this.audio.addEventListener('timeupdate', () => this.onTimeUpdate())
-        this.audio.addEventListener('progress', () => this.onProgress())
-        this.audio.addEventListener('ended', () => this.onEnded())
+        this.audioListeners = new AbortController()
+        const signal = this.audioListeners.signal
+
+        this.audio.addEventListener('timeupdate', () => this.onTimeUpdate(), { signal })
+        this.audio.addEventListener('progress', () => this.onProgress(), { signal })
+        this.audio.addEventListener('ended', () => this.onEnded(), { signal })
+
+        this.audio.addEventListener('play', () => { this.syncPlayButton(); this.emit('play') }, { signal })
+        this.audio.addEventListener('pause', () => { this.syncPlayButton(); this.emit('pause') }, { signal })
+        this.audio.addEventListener('error', () => this.emit('error'), { signal })
 
         this.audio.addEventListener('loadedmetadata', () => {
             if (this.timeSlider) {
@@ -213,8 +277,9 @@ class YurbaAP extends HTMLElement {
             }
 
             if (this.durationElement) this.durationElement.textContent = this.formatTime(this.audio.duration)
-        }, { once: true })
+        }, { once: true, signal })
 
+        this.syncPlayButton()
         this.updatePlayingIndex()
         this.emit('set_track')
     }
@@ -223,7 +288,14 @@ class YurbaAP extends HTMLElement {
         const keys = Object.keys(this.playlist)
         const index = keys.findIndex(key => this.playlist[key] == this.currentTrack)
 
-        if (index != -1) this.playingIndex = index
+        if (index != -1) {
+            this.playingIndex = index
+            return
+        }
+
+        this.playlist = { 0: this.currentTrack }
+        this.playingIndex = 0
+        this.updateNavButtons()
     }
 
     setPlaylist(playlist) {
@@ -242,23 +314,30 @@ class YurbaAP extends HTMLElement {
         this.updateNavButtons()
     }
 
-    prevTrack() {
-        if (this.playingIndex > 0) {
-            this.playingIndex--
-            this.setTrack(this.playlist[this.playingIndex])
-            this.play()
+    playableIndex(from, step) {
+        const length = Object.keys(this.playlist).length
+        for (let index = from + step; index >= 0 && index < length; index += step) {
+            if (this.playlist[index]?.url) return index
         }
+
+        return -1
+    }
+
+    playAt(index) {
+        this.playingIndex = index
+        this.setTrack(this.playlist[index])
+        this.play()
+    }
+
+    prevTrack() {
+        const index = this.playableIndex(this.playingIndex, -1)
+        if (index != -1) this.playAt(index)
     }
 
     nextTrack() {
-        const keys = Object.keys(this.playlist)
-        if (this.playingIndex + 1 < keys.length) {
-            this.playingIndex++
-            this.setTrack(this.playlist[this.playingIndex])
-            this.play()
-        } else {
-            this.emit('playlist_end')
-        }
+        const index = this.playableIndex(this.playingIndex, 1)
+        if (index != -1) this.playAt(index)
+        else this.emit('playlist_end')
     }
 
     updateNavButtons() {
@@ -268,11 +347,8 @@ class YurbaAP extends HTMLElement {
     }
 
     playFirst() {
-        if (Object.keys(this.playlist).length > 0) {
-            this.playingIndex = 0
-            this.setTrack(this.playlist[0])
-            this.play()
-        }
+        const index = this.playableIndex(-1, 1)
+        if (index != -1) this.playAt(index)
     }
 
     getPlayingIndex() { return this.playingIndex }
@@ -280,7 +356,8 @@ class YurbaAP extends HTMLElement {
 
     togglePlay() {
         if (!this.audio) return
-        this.isPaused() ? this.play() : this.pause()
+        if (this.isPaused()) this.play()
+        else this.pause()
         return !this.isPaused()
     }
 
@@ -290,16 +367,22 @@ class YurbaAP extends HTMLElement {
 
     play() {
         if (!this.audio) return
-        this.audio.play()
-        this.playButton.innerHTML = '<span class="material-symbols-rounded">pause</span>'
-        this.emit('play')
+        const audio = this.audio
+        // A failed source rejects play() but stays unpaused
+        audio.play()?.catch(() => {
+            if (this.audio == audio && !audio.paused) audio.pause()
+        })
     }
 
     pause() {
         if (!this.audio) return
         this.audio.pause()
-        this.playButton.innerHTML = '<span class="material-symbols-rounded">play_arrow</span>'
-        this.emit('pause')
+    }
+
+    syncPlayButton() {
+        const playing = !this.isPaused()
+        this.playButton.innerHTML = playing ? '<span class="material-symbols-rounded">pause</span>' : this.playHtml
+        this.playButton.setAttribute('aria-label', playing ? this.labels.pause : this.labels.play)
     }
 
     onTimeUpdate() {
@@ -310,32 +393,27 @@ class YurbaAP extends HTMLElement {
 
     onProgress() {
         if (this.audio.buffered.length > 0 && this.bufferedElement && this.audio.duration) {
-            this.bufferedElement.style.width = (this.audio.buffered.end(0) / this.audio.duration * 100) + '%'
+            this.bufferedElement.style.width = (this.audio.buffered.end(this.audio.buffered.length - 1) / this.audio.duration * 100) + '%'
         }
     }
 
     onEnded() {
+        this.syncPlayButton()
         this.emit('ended')
-        const keys = Object.keys(this.playlist)
-        if (keys.length > 0 && this.playingIndex + 1 < keys.length) {
-            this.playingIndex++
-            this.setTrack(this.playlist[this.playingIndex])
-            this.play()
-        } else {
-            this.emit('playlist_end')
-        }
+        this.nextTrack()
     }
 
     onVolumeInput() {
         if (this.audio) this.audio.volume = this.volumeSlider.value
-        if (this.persist) localStorage.yap_volume = this.volumeSlider.value
+        if (this.persist) YurbaAP.storage().yap_volume = this.volumeSlider.value
         this.updateSlider(this.volumeSlider)
         this.emit('volume')
     }
 
     currentSpeed() {
         if (this.speedLabel) return parseFloat(this.speedLabel.textContent) || 1
-        return this.persist && localStorage.yap_speed != null ? Number(localStorage.yap_speed) : 1
+        const storage = YurbaAP.storage()
+        return this.persist && storage.yap_speed != null ? Number(storage.yap_speed) : 1
     }
 
     cycleSpeed() {
@@ -348,7 +426,12 @@ class YurbaAP extends HTMLElement {
     setSpeed(speed) {
         if (this.audio) this.audio.playbackRate = speed
         if (this.speedLabel) this.speedLabel.textContent = speed.toFixed(2) + 'x'
-        if (this.persist) localStorage.yap_speed = speed
+        const speedSlider = this.querySelector('.y-ap__slider--speed')
+        if (speedSlider && Number(speedSlider.value) != speed) {
+            speedSlider.value = speed
+            this.updateSlider(speedSlider)
+        }
+        if (this.persist) YurbaAP.storage().yap_speed = speed
         this.emit('speed')
     }
 
