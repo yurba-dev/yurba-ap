@@ -9,6 +9,14 @@ class YurbaAP extends HTMLElement {
         seek: 'Seek',
     }
 
+    static ICONS = {
+        play: '<span class="material-symbols-rounded">play_arrow</span>',
+        pause: '<span class="material-symbols-rounded">pause</span>',
+        prev: '<span class="material-symbols-rounded">skip_previous</span>',
+        next: '<span class="material-symbols-rounded">skip_next</span>',
+        volume: '<span class="material-symbols-rounded">volume_up</span>',
+    }
+
     static create(config = {}) {
         const element = document.createElement('yurba-ap')
         element.config = config
@@ -39,7 +47,8 @@ class YurbaAP extends HTMLElement {
     build() {
         this.built = true
         const config = this.config || {}
-        const icons = config.icons || {}
+        const icons = this.icons = {}
+        Object.keys(YurbaAP.ICONS).forEach(name => { icons[name] = config.icons?.[name] || YurbaAP.ICONS[name] })
         const controls = config.controls || {}
         const buttons = config.buttons || []
         this.persist = config.persist != false
@@ -59,9 +68,6 @@ class YurbaAP extends HTMLElement {
         const speedMin = this.speedSteps[0]
         const speedMax = this.speedSteps[this.speedSteps.length - 1]
 
-        const playHtml = this.playHtml = icons.play || '<span class="material-symbols-rounded">play_arrow</span>'
-        const volumeHtml = icons.volume || '<span class="material-symbols-rounded">volume_up</span>'
-
         const customButtons = buttons.map((button, index) =>
             `<div class="y-ap__btn" data-ap-btn="${index}" role="button" tabindex="0"${button.label ? ` aria-label="${attribute(button.label)}"` : ''}>${button.html}</div>`
         ).join('')
@@ -74,14 +80,14 @@ class YurbaAP extends HTMLElement {
                     <p class="y-ap__title"></p>
                 </div>
                 <div class="y-ap__player-controls">
-                    <div class="y-ap__btn-prev" role="button" tabindex="0" aria-label="${attribute(labels.prev)}" hidden><span class="material-symbols-rounded">skip_previous</span></div>
-                    <div class="y-ap__play" role="button" tabindex="0" aria-label="${attribute(labels.play)}">${playHtml}</div>
-                    <div class="y-ap__btn-next" role="button" tabindex="0" aria-label="${attribute(labels.next)}" hidden><span class="material-symbols-rounded">skip_next</span></div>
+                    <div class="y-ap__btn-prev" role="button" tabindex="0" aria-label="${attribute(labels.prev)}" hidden>${icons.prev}</div>
+                    <div class="y-ap__play" role="button" tabindex="0" aria-label="${attribute(labels.play)}">${icons.play}</div>
+                    <div class="y-ap__btn-next" role="button" tabindex="0" aria-label="${attribute(labels.next)}" hidden>${icons.next}</div>
                 </div>
                 <div class="y-ap__side-controls">
                     ${showVolume ?
                         `<div class="y-ap__popup-wrap">
-                            <span class="y-ap__icon y-ap__icon--volume" role="button" tabindex="0" aria-label="${attribute(labels.volume)}">${volumeHtml}</span>
+                            <span class="y-ap__icon y-ap__icon--volume" role="button" tabindex="0" aria-label="${attribute(labels.volume)}">${icons.volume}</span>
                             <div class="y-ap__vol-popup y-ap__popup">
                                 <input type="range" class="y-ap__slider y-ap__slider--volume" aria-label="${attribute(labels.volume)}" min="0" max="1" step="0.01" value="${savedVolume}">
                             </div>
@@ -381,7 +387,7 @@ class YurbaAP extends HTMLElement {
 
     syncPlayButton() {
         const playing = !this.isPaused()
-        this.playButton.innerHTML = playing ? '<span class="material-symbols-rounded">pause</span>' : this.playHtml
+        this.playButton.innerHTML = playing ? this.icons.pause : this.icons.play
         this.playButton.setAttribute('aria-label', playing ? this.labels.pause : this.labels.play)
     }
 

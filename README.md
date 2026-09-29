@@ -47,12 +47,22 @@ player.play()
 
 | Key | Type | Default | Description |
 |---|---|---|---|
-| `icons` | object | built-in | Override button icons. Keys: `play`, `volume`. Each value is an HTML string. |
+| `icons` | object | built-in | Replace built-in icons, see below. Each value is an HTML string; keys left out keep the default. The defaults are in `YurbaAP.ICONS`. |
 | `controls` | object | all visible | Hide built-in controls. Keys: `volume`, `speed`. Set to `false` to hide. |
 | `buttons` | array | `[]` | Custom buttons. Each: `{ html, label?, onClick? }`. `label` is its accessible name; `onClick(player, event)` is called on click. |
 | `persist` | boolean | `true` | Save and restore volume, speed, and last track via `localStorage`. |
 | `speedSteps` | array | `[0.5, 0.75, 1, 1.25, 1.5, 2]` | Playback speeds. The first and last set the range of the speed slider, which opens on a click on the speed label; `cycleSpeed()` steps through all of them. |
 | `labels` | object | English | Accessible names of the controls. Keys: `play`, `pause`, `prev`, `next`, `volume`, `speed`, `seek`. |
+
+**`icons`:**
+
+| Key | Default | Where |
+|---|---|---|
+| `play` | `play_arrow` | Play button while paused. |
+| `pause` | `pause` | Play button while playing. |
+| `prev` | `skip_previous` | Previous track. |
+| `next` | `skip_next` | Next track. |
+| `volume` | `volume_up` | Volume button. |
 
 ### Instance
 

@@ -52,6 +52,7 @@
         <div class="sidebar-group">
             <div class="sidebar-group-title">Customization</div>
             <a href="#controls">Hiding controls</a>
+            <a href="#icons">Icons</a>
             <a href="#css-vars">CSS variables</a>
         </div>
     </nav>
@@ -146,7 +147,7 @@ player.play()</code></pre>
                                 <td><code>icons</code> <span class="optional-badge">optional</span></td>
                                 <td><span class="type-badge">object</span></td>
                                 <td>built-in</td>
-                                <td>Override button icons. Keys: <code>play</code>, <code>volume</code>. Each value is an HTML string.</td>
+                                <td>Replace built-in icons, see <a href="#icons">Icons</a>. Each value is an HTML string; keys left out keep the default.</td>
                             </tr>
                             <tr>
                                 <td><code>controls</code> <span class="optional-badge">optional</span></td>
@@ -187,6 +188,7 @@ player.play()</code></pre>
 
     icons: {
         play:   '&lt;span class="material-symbols-rounded"&gt;play_arrow&lt;/span&gt;',
+        pause:  '&lt;span class="material-symbols-rounded"&gt;pause&lt;/span&gt;',
         volume: '&lt;span class="material-symbols-rounded"&gt;volume_up&lt;/span&gt;',
     },
 
@@ -443,6 +445,31 @@ player.addEventListener('yurba-ap.playlist_end', () =&gt; {
                                 <td><span class="type-badge">true</span></td>
                                 <td>Toggle the playback speed label and its slider popup.</td>
                             </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="doc-section" id="icons">
+                <div class="doc-section-title">Icons</div>
+                <div class="gap-stack">
+                    <p class="note">Pass an <code>icons</code> object to <code>YurbaAP.create()</code>. Each value is HTML inserted as given; keys left out keep the built-in icon. The defaults are in <code>YurbaAP.ICONS</code>.</p>
+                    <div class="code-block">
+                        <pre><code class="language-javascript">const player = YurbaAP.create({
+    icons: {
+        play:  '&lt;svg viewBox="0 0 24 24" width="24" height="24"&gt;...&lt;/svg&gt;',
+        pause: '&lt;svg viewBox="0 0 24 24" width="24" height="24"&gt;...&lt;/svg&gt;',
+    }
+})</code></pre>
+                    </div>
+                    <table class="api-table">
+                        <thead><tr><th>Key</th><th>Default</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>play</code></td><td><code>play_arrow</code></td><td>Play button while paused.</td></tr>
+                            <tr><td><code>pause</code></td><td><code>pause</code></td><td>Play button while playing.</td></tr>
+                            <tr><td><code>prev</code></td><td><code>skip_previous</code></td><td>Previous track.</td></tr>
+                            <tr><td><code>next</code></td><td><code>skip_next</code></td><td>Next track.</td></tr>
+                            <tr><td><code>volume</code></td><td><code>volume_up</code></td><td>Volume button.</td></tr>
                         </tbody>
                     </table>
                 </div>
