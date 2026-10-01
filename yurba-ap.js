@@ -128,6 +128,7 @@ class YurbaAP extends HTMLElement {
 
         this.playlist = {}
         this.playingIndex = 0
+        this.bindMediaSession()
 
         this.addEventListener('keydown', event => {
             if (event.key != 'Enter' && event.key != ' ') return
@@ -235,6 +236,9 @@ class YurbaAP extends HTMLElement {
 
         if (this.currentTimeElement) this.currentTimeElement.textContent = '00:00'
         if (this.durationElement) this.durationElement.textContent = '00:00'
+        if (this.bufferedElement) this.bufferedElement.style.width = '0'
+        // The last track's length would let a seek land past the end of this one
+        if (this.timeSlider) this.timeSlider.max = 0
 
         if (this.persist) {
             try {
@@ -263,7 +267,8 @@ class YurbaAP extends HTMLElement {
         this.audio.preload = 'metadata'
         // Non-finite values from storage make these setters throw
         this.audio.volume = Number.isFinite(volume) ? Math.min(1, Math.max(0, volume)) : 0.5
-        this.audio.playbackRate = Number.isFinite(speed) && speed > 0 ? speed : 1
+        // load() resets playbackRate to the default one
+        this.audio.defaultPlaybackRate = this.audio.playbackRate = Number.isFinite(speed) && speed > 0 ? speed : 1
 
         this.audioListeners = new AbortController()
         const signal = this.audioListeners.signal
@@ -274,20 +279,65 @@ class YurbaAP extends HTMLElement {
 
         this.audio.addEventListener('play', () => { this.syncPlayButton(); this.emit('play') }, { signal })
         this.audio.addEventListener('pause', () => { this.syncPlayButton(); this.emit('pause') }, { signal })
-        this.audio.addEventListener('error', () => this.emit('error'), { signal })
-
-        this.audio.addEventListener('loadedmetadata', () => {
-            if (this.timeSlider) {
-                this.timeSlider.max = this.audio.duration
-                this.updateSlider(this.timeSlider)
-            }
-
-            if (this.durationElement) this.durationElement.textContent = this.formatTime(this.audio.duration)
-        }, { once: true, signal })
+        this.audio.addEventListener('error', () => this.onError(), { signal })
+        this.audio.addEventListener('durationchange', () => this.onDuration(), { signal })
 
         this.syncPlayButton()
         this.updatePlayingIndex()
+        this.updateMediaSession()
         this.emit('set_track')
+    }
+
+    // Some mp3s report Infinity until the end is reached
+    onDuration() {
+        const duration = Number.isFinite(this.audio.duration) ? this.audio.duration : 0
+        if (this.timeSlider) {
+            this.timeSlider.max = duration
+            this.updateSlider(this.timeSlider)
+        }
+
+        if (this.durationElement) this.durationElement.textContent = this.formatTime(duration)
+    }
+
+    // A network error mid-track leaves the element unpaused but silent
+    onError() {
+        if (!this.audio.paused) this.audio.pause()
+        this.emit('error')
+    }
+
+    bindMediaSession() {
+        const session = navigator.mediaSession
+        if (!session) return
+        const handlers = {
+            play: () => this.play(),
+            pause: () => this.pause(),
+            previoustrack: () => this.prevTrack(),
+            nexttrack: () => this.nextTrack(),
+            seekto: details => {
+                if (!this.audio || !Number.isFinite(details.seekTime)) return
+                this.audio.currentTime = details.seekTime
+                this.onTimeUpdate()
+            },
+        }
+        for (const action in handlers) {
+            try { session.setActionHandler(action, handlers[action]) } catch { }
+        }
+    }
+
+    updateMediaSession() {
+        const session = navigator.mediaSession
+        if (!session || typeof MediaMetadata != 'function') return
+        const track = this.currentTrack
+        // A cover URL the browser cannot parse makes MediaMetadata throw
+        try {
+            session.metadata = track ? new MediaMetadata({
+                title: track.title ?? '',
+                artist: track.author ?? '',
+                artwork: track.cover ? [{ src: track.cover }] : [],
+            }) : null
+        } catch {
+            session.metadata = null
+        }
     }
 
     updatePlayingIndex() {
@@ -304,8 +354,16 @@ class YurbaAP extends HTMLElement {
         this.updateNavButtons()
     }
 
+    // The playing track may come as another object with the same id: it is adopted, so the queue goes on from it
     setPlaylist(playlist) {
         this.playlist = playlist
+        const current = this.currentTrack
+        const keys = Object.keys(playlist)
+        const index = keys.findIndex(key => playlist[key] == current || (current?.id != null && String(playlist[key]?.id) == String(current.id)))
+        if (index != -1) {
+            this.playingIndex = index
+            this.currentTrack = playlist[keys[index]]
+        }
         this.updateNavButtons()
     }
 
@@ -374,6 +432,12 @@ class YurbaAP extends HTMLElement {
     play() {
         if (!this.audio) return
         const audio = this.audio
+        // An element that failed never loads again by itself
+        if (audio.error) {
+            const time = audio.currentTime
+            audio.load()
+            if (time) audio.currentTime = time
+        }
         // A failed source rejects play() but stays unpaused
         audio.play()?.catch(() => {
             if (this.audio == audio && !audio.paused) audio.pause()
@@ -389,6 +453,7 @@ class YurbaAP extends HTMLElement {
         const playing = !this.isPaused()
         this.playButton.innerHTML = playing ? this.icons.pause : this.icons.play
         this.playButton.setAttribute('aria-label', playing ? this.labels.pause : this.labels.play)
+        if (navigator.mediaSession) navigator.mediaSession.playbackState = !this.currentTrack ? 'none' : playing ? 'playing' : 'paused'
     }
 
     onTimeUpdate() {
@@ -456,7 +521,7 @@ class YurbaAP extends HTMLElement {
     }
 
     formatTime(time) {
-        if (!time || isNaN(time)) return '00:00'
+        if (!Number.isFinite(time) || time <= 0) return '00:00'
         const minutes = Math.floor(time / 60)
         const seconds = Math.floor(time % 60)
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
